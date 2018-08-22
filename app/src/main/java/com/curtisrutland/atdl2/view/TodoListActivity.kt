@@ -9,6 +9,7 @@ import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.adapter.TodoCollectionAdapter
 import com.curtisrutland.atdl2.constant.Extras
 import com.curtisrutland.atdl2.data.Todo
+import com.curtisrutland.atdl2.data.TodoList
 import com.curtisrutland.atdl2.extension.getDb
 import com.curtisrutland.atdl2.extension.hideKeyboard
 import com.jakewharton.rxbinding2.widget.RxTextView
@@ -18,12 +19,14 @@ import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.coroutines.experimental.bg
+import java.util.concurrent.TimeUnit
 
 class TodoListActivity : AppCompatActivity(), AnkoLogger {
 
     private val viewAdapter = TodoCollectionAdapter()
     private val viewManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
     private var todoListId = Long.MIN_VALUE
+    private var todoList: TodoList? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +43,11 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         RxTextView.afterTextChangeEvents(newTodoEditText)
                 .subscribe { addTodoButton.isEnabled = it.view().text.isNotBlank() }
 
+        RxTextView.afterTextChangeEvents(todoListNameEditText)
+                .skipInitialValue()
+                .debounce(500, TimeUnit.MILLISECONDS)
+                .filter { it.view().text.isNotEmpty() }
+                .subscribe{ updateTodoListName(it.view().text.toString().trim())}
     }
 
     fun addTodoPressed(view: View) {
@@ -59,7 +67,7 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun subscribeToTodoList() {
-        val todoList = bg {
+        val todoListDeferred = bg {
             val db = getDb()
             db.getTodoListTodos(todoListId)
                     .observeOn(AndroidSchedulers.mainThread())
@@ -68,7 +76,8 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         }
 
         launch(UI) {
-            todoListNameEditText.setText(todoList.await().name)
+            todoList = todoListDeferred.await()
+            todoListNameEditText.setText(todoList?.name)
         }
     }
 
@@ -80,4 +89,13 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         bg { getDb().insertTodo(todo) }
     }
 
+    private fun updateTodoListName(name: String) {
+        if(todoList?.name == name) {
+            return
+        }
+        todoList?.name = name
+        bg {
+            getDb().updateTodoList(todoList!!)
+        }
+    }
 }
