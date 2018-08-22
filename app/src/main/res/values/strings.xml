@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">ATDL2</string>
+    <string name="add_todo">Add Todo</string>
+    <string name="debug_message">Lists: <b>%1$d</b></string>
+    <string name="delete">Delete</string>
+    <string name="edit">Todos</string>
+    <string name="confirm_delete">Click OK to delete this list.</string>
+    <string name="confirm_delete_title">Are You Sure?</string>
+    <string name="default_todo_list_title">Todo List</string>
+    <string name="new_todo_hint_text">What to do, what to do?</string>
+</resources>
