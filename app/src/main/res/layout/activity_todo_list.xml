@@ -9,33 +9,57 @@
     android:focusableInTouchMode="true"
     tools:context=".view.TodoListActivity">
 
-    <EditText
-        android:id="@+id/todoListNameEditText"
+    <ViewSwitcher
+        android:id="@+id/titleViewSwitcher"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:ems="10"
-        android:hint="@string/default_todo_list_title"
-        android:inputType="textMultiLine"
-        android:textSize="24sp"
+        android:inAnimation="@android:anim/slide_in_left"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Todo List" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/todoListNameTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:textAlignment="viewStart"
+            android:textSize="36sp"
+            tools:text="Todo List" />
+
+        <EditText
+            android:id="@+id/todoListNameEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:ems="10"
+            android:hint="@string/default_todo_list_title"
+            android:imeOptions="actionDone"
+            android:inputType="textCapWords"
+            android:singleLine="true"
+            android:textSize="24sp"
+            tools:text="Todo List" />
+
+
+    </ViewSwitcher>
+
 
     <Button
         android:id="@+id/addTodoButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:drawableStart="@drawable/ic_add_white_24dp"
-        android:onClick="addTodoPressed"
+        android:onClick="addNewTodo"
         android:text="@string/add_todo"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintBaseline_toBaselineOf="@+id/newTodoEditText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/newTodoEditText" />
 
     <EditText
         android:id="@+id/newTodoEditText"
@@ -46,23 +70,26 @@
         android:layout_marginStart="8dp"
         android:ems="10"
         android:hint="@string/new_todo_hint_text"
+        android:imeOptions="actionDone"
         android:inputType="textCapSentences"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/addTodoButton"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/todoRecyclerView"
-        android:layout_width="395dp"
-        android:layout_height="472dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         app:layout_constraintBottom_toTopOf="@+id/newTodoEditText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/todoListNameEditText"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/titleViewSwitcher" />
 </android.support.constraint.ConstraintLayout>

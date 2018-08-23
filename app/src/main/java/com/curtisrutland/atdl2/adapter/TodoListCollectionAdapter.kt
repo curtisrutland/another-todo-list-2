@@ -15,6 +15,7 @@ class TodoListCollectionAdapter(
         private val onListItemEdit: (Long?) -> Unit
 ) : RecyclerView.Adapter<TodoListCollectionAdapter.ViewHolder>() {
     class ViewHolder(val view: View, val animation: Animation) : RecyclerView.ViewHolder(view)
+
     private var data = listOf<TodoList>()
 
     private var lastPosition = -1
@@ -23,7 +24,7 @@ class TodoListCollectionAdapter(
         val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.todo_list_collection_item, parent, false)
 
-        return ViewHolder(view, AnimationUtils.loadAnimation(parent.context, R.anim.push_left_in))
+        return ViewHolder(view, AnimationUtils.loadAnimation(parent.context, android.R.anim.slide_in_left))
     }
 
     override fun getItemCount() = data.size
@@ -35,11 +36,10 @@ class TodoListCollectionAdapter(
         holder.view.deleteButton.setOnClickListener { onListItemDelete(todoList) }
         holder.view.editButton.setOnClickListener { onListItemEdit(todoList.id) }
         setAnimation(holder, position)
-
     }
 
-    private fun setAnimation(holder: ViewHolder,  position: Int) {
-        if(position > lastPosition) {
+    private fun setAnimation(holder: ViewHolder, position: Int) {
+        if (position > lastPosition) {
             holder.view.startAnimation(holder.animation)
             lastPosition = position
         }

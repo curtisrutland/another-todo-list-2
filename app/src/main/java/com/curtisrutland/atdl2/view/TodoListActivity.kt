@@ -2,9 +2,11 @@ package com.curtisrutland.atdl2.view
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.adapter.TodoCollectionAdapter
 import com.curtisrutland.atdl2.constant.Extras
@@ -12,6 +14,7 @@ import com.curtisrutland.atdl2.data.Todo
 import com.curtisrutland.atdl2.data.TodoList
 import com.curtisrutland.atdl2.extension.getDb
 import com.curtisrutland.atdl2.extension.hideKeyboard
+import com.curtisrutland.atdl2.extension.onEnter
 import com.jakewharton.rxbinding2.widget.RxTextView
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.android.synthetic.main.activity_todo_list.*
@@ -19,7 +22,7 @@ import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.coroutines.experimental.bg
-import java.util.concurrent.TimeUnit
+import org.jetbrains.anko.toast
 
 class TodoListActivity : AppCompatActivity(), AnkoLogger {
 
@@ -27,6 +30,7 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
     private val viewManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
     private var todoListId = Long.MIN_VALUE
     private var todoList: TodoList? = null
+    private var editing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,18 +43,12 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
 
         setupRecyclerView()
         subscribeToTodoList()
-
-        RxTextView.afterTextChangeEvents(newTodoEditText)
-                .subscribe { addTodoButton.isEnabled = it.view().text.isNotBlank() }
-
-        RxTextView.afterTextChangeEvents(todoListNameEditText)
-                .skipInitialValue()
-                .debounce(500, TimeUnit.MILLISECONDS)
-                .filter { it.view().text.isNotEmpty() }
-                .subscribe{ updateTodoListName(it.view().text.toString().trim())}
+        setupRxSubscriptions()
+        setupHandlers()
     }
 
-    fun addTodoPressed(view: View) {
+    @Suppress("UNUSED_PARAMETER")
+    fun addNewTodo(source: View) {
         val text = newTodoEditText.text.toString()
         newTodoEditText.text.clear()
         hideKeyboard()
@@ -58,11 +56,36 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         insertTodo(text)
     }
 
+    override fun onBackPressed() {
+        if (editing) {
+            showEditTitle(false)
+        } else {
+            super.onBackPressed()
+        }
+    }
+
+    private fun showEditTitle(show: Boolean = true) {
+        if (show) {
+            if (titleViewSwitcher.currentView == todoListNameTextView) {
+                todoListNameEditText.setText(todoListNameTextView.text)
+                titleViewSwitcher.showNext()
+                editing = true
+            }
+        } else {
+            if (titleViewSwitcher.currentView == todoListNameEditText) {
+                titleViewSwitcher.showPrevious()
+                hideKeyboard()
+                editing = false
+            }
+        }
+    }
+
     private fun setupRecyclerView() {
         todoRecyclerView.apply {
             setHasFixedSize(true)
             layoutManager = viewManager
             adapter = viewAdapter
+            addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
         }
     }
 
@@ -78,6 +101,28 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         launch(UI) {
             todoList = todoListDeferred.await()
             todoListNameEditText.setText(todoList?.name)
+            todoListNameTextView.text = todoList?.name
+        }
+    }
+
+    private fun setupRxSubscriptions() {
+        RxTextView.afterTextChangeEvents(newTodoEditText)
+                .subscribe { addTodoButton.isEnabled = it.view().text.isNotBlank() }
+    }
+
+    private fun setupHandlers() {
+        todoListNameTextView.setOnLongClickListener {
+            showEditTitle()
+            true
+        }
+
+        todoListNameEditText.onEnter {
+            showEditTitle(false)
+            updateTodoListName()
+        }
+
+        newTodoEditText.onEnter {
+            addNewTodo(newTodoEditText)
         }
     }
 
@@ -89,13 +134,20 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         bg { getDb().insertTodo(todo) }
     }
 
-    private fun updateTodoListName(name: String) {
-        if(todoList?.name == name) {
+    private fun updateTodoListName() {
+        val name = todoListNameEditText.text.toString()
+        if (todoList?.name?.trim().isNullOrEmpty() || todoList?.name == name) {
             return
         }
         todoList?.name = name
-        bg {
-            getDb().updateTodoList(todoList!!)
+        val tdl = todoList ?: throw Exception("Sanity check failed")
+        val def = bg {
+            getDb().updateTodoList(tdl)
+        }
+        launch(UI) {
+            def.await()
+            todoListNameTextView.text = name
+            toast("Updated Todo List Name!")
         }
     }
 }
