@@ -36,6 +36,9 @@ interface TodoDataDao {
     @Update
     fun updateTodo(todo: Todo)
 
+    @Delete
+    fun deleteTodos(vararg todo: Todo)
+
     @Query("DELETE from TodoList")
     fun deleteAllTodoLists()
 

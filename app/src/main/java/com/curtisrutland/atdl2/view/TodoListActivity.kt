@@ -11,6 +11,7 @@ import com.curtisrutland.atdl2.adapter.TodoCollectionAdapter
 import com.curtisrutland.atdl2.constant.Extras
 import com.curtisrutland.atdl2.data.Todo
 import com.curtisrutland.atdl2.data.TodoList
+import com.curtisrutland.atdl2.extension.confirm
 import com.curtisrutland.atdl2.extension.getDb
 import com.curtisrutland.atdl2.extension.hideKeyboard
 import com.curtisrutland.atdl2.extension.onEnter
@@ -21,6 +22,7 @@ import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.coroutines.experimental.bg
+import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.toast
 
 class TodoListActivity : AppCompatActivity(), AnkoLogger {
@@ -80,6 +82,10 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun setupRecyclerView() {
+        viewAdapter.apply {
+            checkIcon = getDrawable(R.drawable.ic_check_box_white_24dp)
+            checkBoxIcon = getDrawable(R.drawable.ic_check_box_outline_blank_white_24dp)
+        }
         todoRecyclerView.apply {
             setHasFixedSize(true)
             layoutManager = viewManager
@@ -123,6 +129,12 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         newTodoEditText.onEnter {
             addNewTodo(newTodoEditText)
         }
+
+        viewAdapter.apply {
+            onItemDelete = { deleteTodo(it) }
+            onItemTouch = { toggleTodoComplete(it) }
+
+        }
     }
 
     private fun insertTodo(text: String) {
@@ -133,6 +145,28 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         bg { getDb().insertTodo(todo) }
     }
 
+    private fun deleteTodo(todo: Todo) {
+        confirm("Delete Todo?", "Press OK to delete.") {
+            launch(UI) {
+                bg {
+                    getDb().deleteTodos(todo)
+                }.await()
+                snackbar(layoutRoot, "Todo Deleted!")
+            }
+        }
+    }
+
+    private fun toggleTodoComplete(todo: Todo) {
+        todo.complete = !todo.complete
+        launch(UI) {
+            bg {
+                getDb().updateTodo(todo)
+            }.await()
+            snackbar(layoutRoot, "${todo.text} - Toggled!")
+        }
+
+    }
+
     private fun updateTodoListName() {
         val name = todoListNameEditText.text.toString()
         if (todoList?.name?.trim().isNullOrEmpty() || todoList?.name == name) {
@@ -140,13 +174,12 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         }
         todoList?.name = name
         val tdl = todoList ?: throw Exception("Sanity check failed")
-        val def = bg {
-            getDb().updateTodoList(tdl)
-        }
         launch(UI) {
-            def.await()
+            bg {
+                getDb().updateTodoList(tdl)
+            }.await()
             todoListNameTextView.text = name
-            toast("Updated Todo List Name!")
+            snackbar(layoutRoot, "Updated Todo List Name!")
         }
     }
 }

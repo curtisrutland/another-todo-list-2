@@ -8,4 +8,6 @@
     <string name="confirm_delete_title">Are You Sure?</string>
     <string name="default_todo_list_title">Todo List</string>
     <string name="new_todo_hint_text">What to do, what to do?</string>
+    <string name="delete_description">Delete</string>
+    <string name="check_description">Check</string>
 </resources>
