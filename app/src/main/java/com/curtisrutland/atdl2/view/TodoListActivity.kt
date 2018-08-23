@@ -6,7 +6,6 @@ import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.View
-import android.view.inputmethod.EditorInfo
 import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.adapter.TodoCollectionAdapter
 import com.curtisrutland.atdl2.constant.Extras

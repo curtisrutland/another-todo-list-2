@@ -31,6 +31,7 @@
         android:focusable="true"
         android:onClick="fabClicked"
         app:elevation="5dp"
+        app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/ic_add_white_24dp" />
