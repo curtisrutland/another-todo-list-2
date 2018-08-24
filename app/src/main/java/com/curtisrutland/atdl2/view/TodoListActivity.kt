@@ -17,6 +17,7 @@ import com.curtisrutland.atdl2.extension.hideKeyboard
 import com.curtisrutland.atdl2.extension.onEnter
 import com.jakewharton.rxbinding2.widget.RxTextView
 import io.reactivex.android.schedulers.AndroidSchedulers
+import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator
 import kotlinx.android.synthetic.main.activity_todo_list.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
@@ -91,6 +92,7 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
             layoutManager = viewManager
             adapter = viewAdapter
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
+            itemAnimator = SlideInLeftAnimator()
         }
     }
 
@@ -162,7 +164,7 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
             bg {
                 getDb().updateTodo(todo)
             }.await()
-            snackbar(layoutRoot, "${todo.text} - Toggled!")
+            //snackbar(layoutRoot, "${todo.text} - Toggled!")
         }
 
     }

@@ -34,38 +34,41 @@ class TodoCollectionAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val todo = data[position]
-        val view = holder.view
-
-        view.todoTextView.apply {
-            text = todo.text
-            paintFlags = if (todo.complete) {
-                setTypeface(typeface, Typeface.ITALIC)
-                paintFlags or Paint.STRIKE_THRU_TEXT_FLAG or Paint.ANTI_ALIAS_FLAG
-            } else {
-                setTypeface(null, Typeface.NORMAL)
-                paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+        holder.view.apply {
+            setOnClickListener { onItemTouch?.invoke(todo) }
+            todoTextView.apply {
+                text = todo.text
+                paintFlags = if (todo.complete) {
+                    setTypeface(typeface, Typeface.ITALIC)
+                    paintFlags or Paint.STRIKE_THRU_TEXT_FLAG or Paint.ANTI_ALIAS_FLAG
+                } else {
+                    setTypeface(null, Typeface.NORMAL)
+                    paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                }
             }
-            setOnClickListener {
-                onItemTouch?.invoke(todo)
-            }
-        }
-
-        view.deleteImageView.setOnClickListener { onItemDelete?.invoke(todo) }
-
-        view.checkImageView.apply {
-            setImageDrawable(
+            deleteImageView.setOnClickListener { onItemDelete?.invoke(todo) }
+            checkImageView.setImageDrawable(
                     if (todo.complete) {
                         checkIcon
                     } else {
                         checkBoxIcon
                     }
             )
-            setOnClickListener { onItemTouch?.invoke(todo) }
         }
+
     }
 
     fun updateData(data: List<Todo>) {
+        val oldData = this.data
         this.data = data
-        notifyDataSetChanged()
+        val max = Math.max(oldData.size, data.size) - 1
+        for (i in 0..max) {
+            when {
+                i > data.size - 1 -> notifyItemRemoved(i)
+                i > oldData.size - 1 -> notifyItemInserted(i)
+                oldData[i].id != data[i].id -> notifyItemChanged(i)
+            }
+        }
+        //notifyDataSetChanged()
     }
 }

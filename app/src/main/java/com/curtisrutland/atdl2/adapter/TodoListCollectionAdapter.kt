@@ -31,10 +31,12 @@ class TodoListCollectionAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val todoList = data[position]
-        holder.view.todoListNameTextView.text = todoList.name
-        holder.view.createdOnTextView.text = todoList.createdOnString
-        holder.view.deleteButton.setOnClickListener { onListItemDelete(todoList) }
-        holder.view.editButton.setOnClickListener { onListItemEdit(todoList.id) }
+        holder.view.apply {
+            todoListNameTextView.text = todoList.name
+            createdOnTextView.text = todoList.createdOnString
+            deleteButton.setOnClickListener { onListItemDelete(todoList) }
+            editButton.setOnClickListener { onListItemEdit(todoList.id) }
+        }
         setAnimation(holder, position)
     }
 

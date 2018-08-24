@@ -39,6 +39,7 @@
                 android:layout_marginBottom="@dimen/todo_card_vert_padding"
                 android:layout_marginEnd="16dp"
                 android:layout_marginTop="@dimen/todo_card_vert_padding"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/delete_description"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
