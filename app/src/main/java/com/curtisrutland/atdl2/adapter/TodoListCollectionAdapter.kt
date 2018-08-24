@@ -8,23 +8,22 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.data.TodoList
+import com.curtisrutland.atdl2.extension.handleUpdateData
 import kotlinx.android.synthetic.main.todo_list_collection_item.view.*
 
 class TodoListCollectionAdapter(
-        private val onListItemDelete: (TodoList) -> Unit,
-        private val onListItemEdit: (Long?) -> Unit
+        var onListItemDelete: ((TodoList) -> Unit)? = null,
+        var onListItemEdit: ((Long?) -> Unit)? = null
 ) : RecyclerView.Adapter<TodoListCollectionAdapter.ViewHolder>() {
-    class ViewHolder(val view: View, val animation: Animation) : RecyclerView.ViewHolder(view)
+    class ViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
     private var data = listOf<TodoList>()
-
-    private var lastPosition = -1
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.todo_list_collection_item, parent, false)
 
-        return ViewHolder(view, AnimationUtils.loadAnimation(parent.context, android.R.anim.slide_in_left))
+        return ViewHolder(view)
     }
 
     override fun getItemCount() = data.size
@@ -34,22 +33,18 @@ class TodoListCollectionAdapter(
         holder.view.apply {
             todoListNameTextView.text = todoList.name
             createdOnTextView.text = todoList.createdOnString
-            deleteButton.setOnClickListener { onListItemDelete(todoList) }
-            editButton.setOnClickListener { onListItemEdit(todoList.id) }
-        }
-        setAnimation(holder, position)
-    }
-
-    private fun setAnimation(holder: ViewHolder, position: Int) {
-        if (position > lastPosition) {
-            holder.view.startAnimation(holder.animation)
-            lastPosition = position
+            setOnClickListener { onListItemEdit?.invoke(todoList.id) }
+            //deleteButton.setOnClickListener { onListItemDelete?.invoke(todoList) }
+            //editButton.setOnClickListener { onListItemEdit?.invoke(todoList.id) }
         }
     }
 
     fun updateData(data: List<TodoList>) {
+        val oldData = this.data
         this.data = data
-        notifyDataSetChanged()
+        handleUpdateData(data, oldData) { before, after ->
+            before.id != after.id || before.name != after.name
+        }
     }
 
 }

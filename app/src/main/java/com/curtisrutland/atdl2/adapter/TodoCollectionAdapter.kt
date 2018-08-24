@@ -4,11 +4,13 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.data.Todo
+import com.curtisrutland.atdl2.extension.handleUpdateData
 import kotlinx.android.synthetic.main.todo_collection_item.view.*
 
 class TodoCollectionAdapter(
@@ -61,14 +63,9 @@ class TodoCollectionAdapter(
     fun updateData(data: List<Todo>) {
         val oldData = this.data
         this.data = data
-        val max = Math.max(oldData.size, data.size) - 1
-        for (i in 0..max) {
-            when {
-                i > data.size - 1 -> notifyItemRemoved(i)
-                i > oldData.size - 1 -> notifyItemInserted(i)
-                oldData[i].id != data[i].id -> notifyItemChanged(i)
-            }
+        handleUpdateData(data, oldData) { before, after ->
+            before.id != after.id
+                    || before.complete != after.complete
         }
-        //notifyDataSetChanged()
     }
 }

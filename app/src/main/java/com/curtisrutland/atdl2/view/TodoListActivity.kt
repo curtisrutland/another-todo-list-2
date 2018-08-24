@@ -24,7 +24,7 @@ import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.toast
+import org.jetbrains.anko.info
 
 class TodoListActivity : AppCompatActivity(), AnkoLogger {
 
@@ -93,6 +93,7 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
             adapter = viewAdapter
             addItemDecoration(DividerItemDecoration(context, DividerItemDecoration.VERTICAL))
             itemAnimator = SlideInLeftAnimator()
+            itemAnimator.changeDuration = 250
         }
     }
 
@@ -159,12 +160,13 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun toggleTodoComplete(todo: Todo) {
-        todo.complete = !todo.complete
+        val id = todo.id ?: throw Exception("Attempt to update a null todo id")
+        val complete = !todo.complete
         launch(UI) {
             bg {
-                getDb().updateTodo(todo)
+                getDb().setTodoComplete(id, complete)
             }.await()
-            //snackbar(layoutRoot, "${todo.text} - Toggled!")
+            info { "Todo ${todo.text} complete to ${todo.complete}" }
         }
 
     }

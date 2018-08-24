@@ -21,4 +21,6 @@ data class Todo(
     constructor() : this(null, null, "", false, null)
     constructor(text: String) : this(null, null, text, false, Date())
     constructor(todoListId: Long?, text: String): this(null, todoListId, text, false, Date())
+
+    override fun toString() = "Id: $id, text: '$text', complete: $complete, belongsTo: $todoListId"
 }

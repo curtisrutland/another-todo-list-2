@@ -36,6 +36,9 @@ interface TodoDataDao {
     @Update
     fun updateTodo(todo: Todo)
 
+    @Query("UPDATE Todo Set complete = :complete where id = :id")
+    fun setTodoComplete(id: Long, complete: Boolean)
+
     @Delete
     fun deleteTodos(vararg todo: Todo)
 

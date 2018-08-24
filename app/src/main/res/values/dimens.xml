@@ -1,5 +1,5 @@
 <resources>
-    <dimen name="todo_card_vert_padding">24dp</dimen>
+    <dimen name="todo_card_vert_padding">16dp</dimen>
     <dimen name="todo_icon_button_size">32dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
 </resources>
