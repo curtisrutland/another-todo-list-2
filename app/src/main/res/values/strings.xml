@@ -10,4 +10,7 @@
     <string name="new_todo_hint_text">What to do, what to do?</string>
     <string name="delete_description">Delete</string>
     <string name="check_description">Check</string>
+    <string name="prompt_hint">Enter Text</string>
+
+    <string name="edit_title_text">Edit Name</string>
 </resources>

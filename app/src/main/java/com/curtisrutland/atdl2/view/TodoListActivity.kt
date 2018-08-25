@@ -5,16 +5,17 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.helper.ItemTouchHelper
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.adapter.TodoCollectionAdapter
 import com.curtisrutland.atdl2.constant.Extras
 import com.curtisrutland.atdl2.data.Todo
 import com.curtisrutland.atdl2.data.TodoList
-import com.curtisrutland.atdl2.extension.confirm
-import com.curtisrutland.atdl2.extension.getDb
-import com.curtisrutland.atdl2.extension.hideKeyboard
-import com.curtisrutland.atdl2.extension.onEnter
+import com.curtisrutland.atdl2.extension.*
+import com.curtisrutland.atdl2.helpers.SwipeToDeleteCallback
 import com.jakewharton.rxbinding2.widget.RxTextView
 import io.reactivex.android.schedulers.AndroidSchedulers
 import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator
@@ -25,6 +26,7 @@ import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.jetbrains.anko.design.snackbar
 import org.jetbrains.anko.info
+import org.jetbrains.anko.toast
 
 class TodoListActivity : AppCompatActivity(), AnkoLogger {
 
@@ -32,7 +34,6 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
     private val viewManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
     private var todoListId = Long.MIN_VALUE
     private var todoList: TodoList? = null
-    private var editing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,6 +50,23 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         setupHandlers()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.todo_action_bar_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.editTitleAction -> {
+            prompt("New Todo List Name", "New Name") {
+                updateTodoListName(it)
+            }
+            true
+        }
+        else -> {
+            super.onOptionsItemSelected(item)
+        }
+    }
+
     @Suppress("UNUSED_PARAMETER")
     fun addNewTodo(source: View) {
         val text = newTodoEditText.text.toString()
@@ -56,30 +74,6 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         hideKeyboard()
         layoutRoot.requestFocus()
         insertTodo(text)
-    }
-
-    override fun onBackPressed() {
-        if (editing) {
-            showEditTitle(false)
-        } else {
-            super.onBackPressed()
-        }
-    }
-
-    private fun showEditTitle(show: Boolean = true) {
-        if (show) {
-            if (titleViewSwitcher.currentView == todoListNameTextView) {
-                todoListNameEditText.setText(todoListNameTextView.text)
-                titleViewSwitcher.showNext()
-                editing = true
-            }
-        } else {
-            if (titleViewSwitcher.currentView == todoListNameEditText) {
-                titleViewSwitcher.showPrevious()
-                hideKeyboard()
-                editing = false
-            }
-        }
     }
 
     private fun setupRecyclerView() {
@@ -95,21 +89,24 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
             itemAnimator = SlideInLeftAnimator()
             itemAnimator.changeDuration = 250
         }
+        val swipeHandler = object : SwipeToDeleteCallback(this) {
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder?, direction: Int) {
+                toast("Delete ${viewHolder?.adapterPosition}")
+            }
+        }
+        ItemTouchHelper(swipeHandler).attachToRecyclerView(todoRecyclerView)
     }
 
     private fun subscribeToTodoList() {
-        val todoListDeferred = bg {
-            val db = getDb()
-            db.getTodoListTodos(todoListId)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe { viewAdapter.updateData(it) }
-            db.getTodoList(todoListId)
-        }
-
         launch(UI) {
-            todoList = todoListDeferred.await()
-            todoListNameEditText.setText(todoList?.name)
-            todoListNameTextView.text = todoList?.name
+            todoList = bg {
+                val db = getDb()
+                db.getTodoListTodos(todoListId)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe { viewAdapter.updateData(it) }
+                db.getTodoList(todoListId)
+            }.await()
+            todoList?.let { supportActionBar?.title = it.name }
         }
     }
 
@@ -119,16 +116,6 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun setupHandlers() {
-        todoListNameTextView.setOnLongClickListener {
-            showEditTitle()
-            true
-        }
-
-        todoListNameEditText.onEnter {
-            showEditTitle(false)
-            updateTodoListName()
-        }
-
         newTodoEditText.onEnter {
             addNewTodo(newTodoEditText)
         }
@@ -171,19 +158,19 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
 
     }
 
-    private fun updateTodoListName() {
-        val name = todoListNameEditText.text.toString()
-        if (todoList?.name?.trim().isNullOrEmpty() || todoList?.name == name) {
-            return
-        }
+    private fun updateTodoListName(name: String) {
+        if (name.isEmpty()) return
+        if (todoList?.name?.trim() == name.trim()) return
         todoList?.name = name
-        val tdl = todoList ?: throw Exception("Sanity check failed")
-        launch(UI) {
-            bg {
-                getDb().updateTodoList(tdl)
-            }.await()
-            todoListNameTextView.text = name
-            snackbar(layoutRoot, "Updated Todo List Name!")
+        todoList?.let {
+            launch(UI) {
+                bg {
+                    getDb().updateTodoList(it)
+                }.await()
+                supportActionBar?.title = name
+                snackbar(layoutRoot, "Updated Todo List Name!")
+            }
         }
+
     }
 }

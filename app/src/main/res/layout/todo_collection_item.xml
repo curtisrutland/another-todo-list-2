@@ -5,6 +5,7 @@
     android:id="@+id/constraintView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="?android:attr/selectableItemBackground"
     android:paddingBottom="@dimen/todo_card_vert_padding"
     android:paddingTop="@dimen/todo_card_vert_padding">
 

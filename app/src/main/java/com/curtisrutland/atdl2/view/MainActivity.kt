@@ -11,18 +11,16 @@ import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.adapter.TodoListCollectionAdapter
 import com.curtisrutland.atdl2.constant.Extras
 import com.curtisrutland.atdl2.data.TodoList
+import com.curtisrutland.atdl2.extension.confirm
 import com.curtisrutland.atdl2.extension.getDb
 import io.reactivex.android.schedulers.AndroidSchedulers
 import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
-import org.jetbrains.anko.AnkoLogger
-import org.jetbrains.anko.alert
+import org.jetbrains.anko.*
 import org.jetbrains.anko.coroutines.experimental.bg
-import org.jetbrains.anko.noButton
-import org.jetbrains.anko.yesButton
+import kotlinx.coroutines.experimental.android.UI
 
 class MainActivity : AppCompatActivity(), AnkoLogger {
 
@@ -70,14 +68,9 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun onTodoListDelete(todoList: TodoList) {
-        alert(getString(R.string.confirm_delete), getString(R.string.confirm_delete_title)) {
-            yesButton {
-                bg {
-                    getDb().deleteTodoList(todoList)
-                }
-            }
-            noButton { }
-        }.show()
+        val text = getString(R.string.confirm_delete)
+        val title = getString(R.string.confirm_delete_title)
+        confirm(title, text) { deleteTodoList(todoList) }
     }
 
     private fun onTodoListEdit(id: Long?) {
@@ -96,4 +89,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
         startActivity(intent)
     }
 
+    private fun deleteTodoList(todoList: TodoList): Deferred<Unit> = bg {
+        getDb().deleteTodoList(todoList)
+    }
 }
