@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/projectLinkAction"
+        android:icon="@drawable/ic_github_mark"
+        android:title="@string/view_on_github"
+        app:showAsAction="ifRoom" />
+</menu>
