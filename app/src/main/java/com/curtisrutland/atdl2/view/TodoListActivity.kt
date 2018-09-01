@@ -12,7 +12,6 @@ import android.view.View
 import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.adapter.TodoCollectionAdapter
 import com.curtisrutland.atdl2.constant.Extras
-import com.curtisrutland.atdl2.data.Todo
 import com.curtisrutland.atdl2.data.TodoList
 import com.curtisrutland.atdl2.extension.*
 import com.curtisrutland.atdl2.helpers.SwipeToDeleteCallback
@@ -24,6 +23,7 @@ import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.jetbrains.anko.design.snackbar
+import org.ocpsoft.prettytime.PrettyTime
 
 class TodoListActivity : AppCompatActivity(), AnkoLogger {
 
@@ -115,30 +115,29 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         newTodoEditText.onEnter {
             addNewTodo(newTodoEditText)
         }
+        viewAdapter.onItemLongClick = {
+            val message = "Created ${PrettyTime().format(it.createdOn)}"
+            snackbar(layoutRootCoordinator, message)
+        }
     }
 
     private fun insertTodo(text: String) {
-        if (text.isEmpty()) {
-            return
+        if (text.isNotBlank()) {
+            viewAdapter.addItem(text)
         }
-        viewAdapter.addItem(text)
     }
 
 
     private fun updateTodoListName(): Boolean {
-        prompt("New Todo List Name", "New Name") { name ->
-            if (name.isEmpty())
-                return@prompt
-            if (todoList?.name?.trim() == name.trim())
+        prompt("New Todo List Name", "New Name", todoList?.name) { name ->
+            if (name.isEmpty() || todoList?.name?.trim() == name.trim())
                 return@prompt
             todoList?.name = name
             todoList?.let {
                 launch(UI) {
-                    bg {
-                        getDb().updateTodoList(it)
-                    }.await()
+                    bg { getDb().updateTodoList(it) }.await()
                     supportActionBar?.title = name
-                    snackbar(layoutRoot, "Updated Todo List Name!")
+                    snackbar(layoutRootCoordinator, "Updated Todo List Name!")
                 }
             }
         }

@@ -11,7 +11,7 @@ import kotlinx.android.synthetic.main.todo_list_collection_item.view.*
 
 class TodoListCollectionAdapter :
         RecyclerView.Adapter<TodoListCollectionAdapter.ViewHolder>(),
-        TouchableItemAdapter<Long?> {
+        ClickableItemAdapter<Long?> {
 
     class ViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 

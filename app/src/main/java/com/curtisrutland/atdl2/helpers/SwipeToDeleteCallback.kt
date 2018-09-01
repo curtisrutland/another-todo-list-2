@@ -1,6 +1,7 @@
 package com.curtisrutland.atdl2.helpers
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.*
 import android.graphics.drawable.ColorDrawable
 import android.support.v4.content.ContextCompat
@@ -8,25 +9,27 @@ import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
 import com.curtisrutland.atdl2.R
 
-abstract class SwipeToDeleteCallback(context: Context): ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+
+
+abstract class SwipeToDeleteCallback(context: Context) : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
     private val deleteIcon = ContextCompat.getDrawable(context, R.drawable.ic_delete_white_24dp)
     private val intrinsicWidth = deleteIcon?.intrinsicWidth ?: 0
-    private val intrinsicHeight = deleteIcon?.intrinsicHeight?: 0
+    private val intrinsicHeight = deleteIcon?.intrinsicHeight ?: 0
     private val background = ColorDrawable()
     private val backgroundColor = ContextCompat.getColor(context, R.color.colorDanger) //Color.parseColor("#f44336")
     private val clearPaint = Paint().apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR) }
 
 
-    override fun getMovementFlags(recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?): Int {
-        /**
-         * To disable "swipe" for specific item return 0 here.
-         * For example:
-         * if (viewHolder?.itemViewType == YourAdapter.SOME_TYPE) return 0
-         * if (viewHolder?.adapterPosition == 0) return 0
-         */
-        if (viewHolder?.adapterPosition == 10) return 0
-        return super.getMovementFlags(recyclerView, viewHolder)
-    }
+//    override fun getMovementFlags(recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?): Int {
+//        /**
+//         * To disable "swipe" for specific item return 0 here.
+//         * For example:
+//         * if (viewHolder?.itemViewType == YourAdapter.SOME_TYPE) return 0
+//         * if (viewHolder?.adapterPosition == 0) return 0
+//         */
+//        //if (viewHolder?.adapterPosition == 10) return 0
+//        return super.getMovementFlags(recyclerView, viewHolder)
+//    }
 
     override fun onMove(recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?, target: RecyclerView.ViewHolder?): Boolean {
         return false
@@ -60,13 +63,31 @@ abstract class SwipeToDeleteCallback(context: Context): ItemTouchHelper.SimpleCa
         val deleteIconBottom = deleteIconTop + intrinsicHeight
 
         // Draw the delete icon
-        deleteIcon?.setBounds(deleteIconLeft, deleteIconTop, deleteIconRight, deleteIconBottom)
-        deleteIcon?.draw(c)
-
+        val op = getIconOpacity(Math.abs(dX))
+        if (op > 0) {
+            deleteIcon?.setBounds(deleteIconLeft, deleteIconTop, deleteIconRight, deleteIconBottom)
+            deleteIcon?.alpha = op
+            deleteIcon?.draw(c)
+        }
         super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
     }
 
     private fun clearCanvas(c: Canvas?, left: Float, top: Float, right: Float, bottom: Float) {
         c?.drawRect(left, top, right, bottom, clearPaint)
+    }
+
+    private fun convertDpToPx(dp: Int) : Float {
+        return Resources.getSystem().displayMetrics.density * dp
+    }
+
+    private fun getIconOpacity(dX: Float): Int {
+        val uByte = 0xFF //unsigned byte
+        val widthPx = convertDpToPx(intrinsicWidth)
+        val max = widthPx + widthPx * 0
+        val min = widthPx - widthPx * .4
+        if (dX <= min) return 0
+        if (dX > max) return uByte
+        val offset = uByte * ((max - dX) / (max - min)) //offset by the percentage from boundary
+        return (uByte - offset).toInt()
     }
 }

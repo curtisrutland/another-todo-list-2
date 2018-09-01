@@ -15,7 +15,9 @@ import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 
-class TodoCollectionAdapter : RecyclerView.Adapter<TodoCollectionAdapter.ViewHolder>() {
+class TodoCollectionAdapter :
+        RecyclerView.Adapter<TodoCollectionAdapter.ViewHolder>(),
+        LongClickableItemAdapter<Todo> {
 
     class ViewHolder(val view: View) : RecyclerView.ViewHolder(view)
 
@@ -25,6 +27,7 @@ class TodoCollectionAdapter : RecyclerView.Adapter<TodoCollectionAdapter.ViewHol
 
     var checkIcon: Drawable? = null
     var checkBoxIcon: Drawable? = null
+    override var onItemLongClick: ((Todo) -> Unit)? = null
 
     fun deleteItemAt(position: Int) {
         val todo = data[position]
@@ -74,6 +77,10 @@ class TodoCollectionAdapter : RecyclerView.Adapter<TodoCollectionAdapter.ViewHol
         val todo = data[position]
         holder.view.apply {
             setOnClickListener { toggleItem(todo, position) }
+            setOnLongClickListener{
+                itemLongClicked(todo)
+                true
+            }
             todoTextView.apply {
                 text = todo.text
                 paintFlags = if (todo.complete) {
