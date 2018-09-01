@@ -36,7 +36,7 @@ fun Context.confirm(title: String, text: String, onResult: () -> Unit) {
 fun Context.yesNo(title: String, text: String, onResult: (Boolean) -> Unit) {
     alert(text, title) {
         yesButton { onResult(true) }
-        noButton { onResult(true) }
+        noButton { onResult(false) }
     }.show()
 }
 

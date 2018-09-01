@@ -9,11 +9,13 @@ import com.curtisrutland.atdl2.data.TodoList
 import com.curtisrutland.atdl2.extension.handleUpdateData
 import kotlinx.android.synthetic.main.todo_list_collection_item.view.*
 
-class TodoListCollectionAdapter(
-        var onListItemDelete: ((TodoList) -> Unit)? = null,
-        var onListItemEdit: ((Long?) -> Unit)? = null
-) : RecyclerView.Adapter<TodoListCollectionAdapter.ViewHolder>() {
+class TodoListCollectionAdapter :
+        RecyclerView.Adapter<TodoListCollectionAdapter.ViewHolder>(),
+        TouchableItemAdapter<Long?> {
+
     class ViewHolder(val view: View) : RecyclerView.ViewHolder(view)
+
+    override var onItemClick: ((Long?) -> Unit)? = null
 
     private var data = listOf<TodoList>()
 
@@ -31,8 +33,7 @@ class TodoListCollectionAdapter(
         holder.view.apply {
             todoListNameTextView.text = todoList.name
             createdOnTextView.text = todoList.createdOnString
-            setOnClickListener { onListItemEdit?.invoke(todoList.id) }
-            deleteImageView.setOnClickListener { onListItemDelete?.invoke(todoList) }
+            setOnClickListener { itemClicked(todoList.id) }
         }
     }
 

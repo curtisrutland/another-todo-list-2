@@ -15,11 +15,8 @@ interface TodoDataDao {
     @Delete
     fun deleteTodoList(todoList: TodoList)
 
-    @Query("SELECT * from Todo where id = :id")
-    fun getTodo(id: Long): Todo
-
     @Query("SELECT * from Todo where todoListId = :todoListId")
-    fun getTodoListTodos(todoListId: Long): Flowable<List<Todo>>
+    fun getTodoListTodos(todoListId: Long): List<Todo>
 
     @Update
     fun updateTodoList(todoList: TodoList)
@@ -30,21 +27,12 @@ interface TodoDataDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertTodo(todo: Todo): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertTodos(vararg todo: Todo): List<Long>
+    @Query("SELECT * from Todo where id = :id")
+    fun getTodo(id: Long?): Todo?
 
     @Update
     fun updateTodo(todo: Todo)
 
-    @Query("UPDATE Todo Set complete = :complete where id = :id")
-    fun setTodoComplete(id: Long, complete: Boolean)
-
     @Delete
     fun deleteTodos(vararg todo: Todo)
-
-    @Query("DELETE from TodoList")
-    fun deleteAllTodoLists()
-
-    @Query("DELETE from Todo")
-    fun deleteAllTodos()
 }

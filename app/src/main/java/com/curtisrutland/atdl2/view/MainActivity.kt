@@ -11,7 +11,6 @@ import com.curtisrutland.atdl2.R
 import com.curtisrutland.atdl2.adapter.TodoListCollectionAdapter
 import com.curtisrutland.atdl2.constant.Extras
 import com.curtisrutland.atdl2.data.TodoList
-import com.curtisrutland.atdl2.extension.confirm
 import com.curtisrutland.atdl2.extension.getDb
 import io.reactivex.android.schedulers.AndroidSchedulers
 import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator
@@ -44,9 +43,7 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
     private fun setupRecyclerView() {
         viewAdapter.apply {
-            onListItemDelete = { onTodoListDelete(it) }
-            onListItemEdit = { onTodoListEdit(it) }
-
+            onItemClick = { showTodoList(it) }
         }
         todoRecyclerView.apply {
             setHasFixedSize(true)
@@ -60,25 +57,21 @@ class MainActivity : AppCompatActivity(), AnkoLogger {
 
     @Suppress("UNUSED_PARAMETER")
     fun fabClicked(view: View) {
+        createTodoList()
+    }
+
+    private fun createTodoList() {
         val newTodoName = getString(R.string.default_todo_list_title)
         launch(UI) {
-            val newTodoId = createNewTodoList(newTodoName).await()
+            val newTodoId = bg {
+                getDb().insertTodoList(TodoList(newTodoName))
+            }.await()
             startTodoListActivity(newTodoId)
         }
     }
 
-    private fun onTodoListDelete(todoList: TodoList) {
-        val text = getString(R.string.confirm_delete)
-        val title = getString(R.string.confirm_delete_title)
-        confirm(title, text) { deleteTodoList(todoList) }
-    }
-
-    private fun onTodoListEdit(id: Long?) {
+    private fun showTodoList(id: Long?) {
         startTodoListActivity(id)
-    }
-
-    private fun createNewTodoList(name: String): Deferred<Long> = bg {
-        getDb().insertTodoList(TodoList(name))
     }
 
     private fun startTodoListActivity(id: Long?) {

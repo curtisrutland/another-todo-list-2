@@ -17,7 +17,6 @@ import com.curtisrutland.atdl2.data.TodoList
 import com.curtisrutland.atdl2.extension.*
 import com.curtisrutland.atdl2.helpers.SwipeToDeleteCallback
 import com.jakewharton.rxbinding2.widget.RxTextView
-import io.reactivex.android.schedulers.AndroidSchedulers
 import jp.wasabeef.recyclerview.animators.SlideInLeftAnimator
 import kotlinx.android.synthetic.main.activity_todo_list.*
 import kotlinx.coroutines.experimental.android.UI
@@ -25,8 +24,6 @@ import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.AnkoLogger
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.jetbrains.anko.design.snackbar
-import org.jetbrains.anko.info
-import org.jetbrains.anko.toast
 
 class TodoListActivity : AppCompatActivity(), AnkoLogger {
 
@@ -44,8 +41,7 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
             throw Exception("No ID Provided")
         }
 
-        setupRecyclerView()
-        subscribeToTodoList()
+        getTodoList()
         setupRxSubscriptions()
         setupHandlers()
     }
@@ -56,15 +52,9 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.editTitleAction -> {
-            prompt("New Todo List Name", "New Name") {
-                updateTodoListName(it)
-            }
-            true
-        }
-        else -> {
-            super.onOptionsItemSelected(item)
-        }
+        R.id.editTitleAction -> updateTodoListName()
+        R.id.deleteListAction -> deleteTodoList()
+        else -> super.onOptionsItemSelected(item)
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -77,6 +67,12 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
     }
 
     private fun setupRecyclerView() {
+        todoList?.id?.let { id ->
+            launch(UI) {
+                val db = bg { getDb() }.await()
+                viewAdapter.setTodoListId(id, db)
+            }
+        }
         viewAdapter.apply {
             checkIcon = getDrawable(R.drawable.ic_check_box_white_24dp)
             checkBoxIcon = getDrawable(R.drawable.ic_check_box_outline_blank_white_24dp)
@@ -91,22 +87,22 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         }
         val swipeHandler = object : SwipeToDeleteCallback(this) {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder?, direction: Int) {
-                toast("Delete ${viewHolder?.adapterPosition}")
+                viewHolder?.let {
+                    viewAdapter.deleteItemAt(it.adapterPosition)
+                }
             }
         }
         ItemTouchHelper(swipeHandler).attachToRecyclerView(todoRecyclerView)
     }
 
-    private fun subscribeToTodoList() {
+    private fun getTodoList() {
         launch(UI) {
-            todoList = bg {
-                val db = getDb()
-                db.getTodoListTodos(todoListId)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe { viewAdapter.updateData(it) }
-                db.getTodoList(todoListId)
-            }.await()
-            todoList?.let { supportActionBar?.title = it.name }
+            todoList = bg { getDb().getTodoList(todoListId) }.await()
+            todoList?.let {
+                supportActionBar?.title = it.name
+                setupRecyclerView()
+            }
+
         }
     }
 
@@ -119,58 +115,47 @@ class TodoListActivity : AppCompatActivity(), AnkoLogger {
         newTodoEditText.onEnter {
             addNewTodo(newTodoEditText)
         }
-
-        viewAdapter.apply {
-            onItemDelete = { deleteTodo(it) }
-            onItemTouch = { toggleTodoComplete(it) }
-
-        }
     }
 
     private fun insertTodo(text: String) {
         if (text.isEmpty()) {
             return
         }
-        val todo = Todo(todoListId, text)
-        bg { getDb().insertTodo(todo) }
+        viewAdapter.addItem(text)
     }
 
-    private fun deleteTodo(todo: Todo) {
-        confirm("Delete Todo?", "Press OK to delete.") {
-            launch(UI) {
-                bg {
-                    getDb().deleteTodos(todo)
-                }.await()
-                snackbar(layoutRoot, "Todo Deleted!")
+
+    private fun updateTodoListName(): Boolean {
+        prompt("New Todo List Name", "New Name") { name ->
+            if (name.isEmpty())
+                return@prompt
+            if (todoList?.name?.trim() == name.trim())
+                return@prompt
+            todoList?.name = name
+            todoList?.let {
+                launch(UI) {
+                    bg {
+                        getDb().updateTodoList(it)
+                    }.await()
+                    supportActionBar?.title = name
+                    snackbar(layoutRoot, "Updated Todo List Name!")
+                }
             }
         }
+        return true
     }
 
-    private fun toggleTodoComplete(todo: Todo) {
-        val id = todo.id ?: throw Exception("Attempt to update a null todo id")
-        val complete = !todo.complete
-        launch(UI) {
-            bg {
-                getDb().setTodoComplete(id, complete)
-            }.await()
-            info { "Todo ${todo.text} complete to ${todo.complete}" }
-        }
-
-    }
-
-    private fun updateTodoListName(name: String) {
-        if (name.isEmpty()) return
-        if (todoList?.name?.trim() == name.trim()) return
-        todoList?.name = name
-        todoList?.let {
-            launch(UI) {
-                bg {
-                    getDb().updateTodoList(it)
-                }.await()
-                supportActionBar?.title = name
-                snackbar(layoutRoot, "Updated Todo List Name!")
+    private fun deleteTodoList(): Boolean {
+        confirm("Delete Todo List?", "This will remove all todos as well. Press OK to delete.") {
+            todoList?.let { todoList ->
+                launch(UI) {
+                    bg {
+                        getDb().deleteTodoList(todoList)
+                    }.await()
+                    finish()
+                }
             }
         }
-
+        return true
     }
 }

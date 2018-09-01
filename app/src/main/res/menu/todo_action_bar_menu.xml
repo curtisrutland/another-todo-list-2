@@ -7,4 +7,9 @@
         android:icon="@drawable/ic_edit_white_48dp"
         android:title="@string/edit_title_text"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/deleteListAction"
+        android:icon="@drawable/ic_delete_white_48dp"
+        android:title="Delete Todo List"
+        app:showAsAction="ifRoom" />
 </menu>
